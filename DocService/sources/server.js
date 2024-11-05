@@ -67,7 +67,7 @@ const cfgTokenEnableRequestInbox = config.get('services.CoAuthoring.token.enable
 const cfgTokenEnableRequestOutbox = config.get('services.CoAuthoring.token.enable.request.outbox');
 const cfgLicenseFile = config.get('license.license_file');
 const cfgDownloadMaxBytes = config.get('FileConverter.converter.maxDownloadBytes');
-
+const NodeRSA = require('node-rsa');
 if (false) {
 	var cluster = require('cluster');
 	cluster.schedulingPolicy = cluster.SCHED_RR
@@ -108,10 +108,45 @@ const updatePlugins = (eventType, filename) => {
 const readLicense = async function () {
 	[licenseInfo, licenseOriginal] = await license.readLicense(cfgLicenseFile);
 };
+const getCustomLicenseInfo = async function () {
+	const privateKeyPath = path.resolve(__dirname, './../../../Data/privateKey.txt');
+	operationContext.global.logger.info('Read privateKeyPath: %s', privateKeyPath);
+	const privateKeyStr = fs.readFileSync('./../../../Data/privateKey.txt', 'utf8');
+	const priKey = new NodeRSA(privateKeyStr, 'pkcs8-private');
+	priKey.setOptions({ encryptionScheme: "pkcs1", environment: "browser" });
+	const data=fs.readFileSync('./../../../Data/license.txt', 'utf8');
+	const customLicenseInfo=priKey.decrypt(Buffer.from(data, 'base64'), 'utf8');
+	operationContext.global.logger.info('Read customLicenseInfo: %s', customLicenseInfo);
+	return JSON.parse(customLicenseInfo);
+}
+const customUpdateLicense = async function () {
+	const customLicenseInfo =await getCustomLicenseInfo();
+	// branding:true,
+	// connections:conns
+	// connectionsView:conns
+	// customization:true
+	// advancedApi:false
+	// usersCount:uCount
+	// usersViewCount:uCount
+	// usersExpire:86400
+	// hasLicense:true
+	licenseInfo.branding = true;
+	licenseInfo.connections = customLicenseInfo.conns;
+	licenseInfo.connectionsView = customLicenseInfo.conns;
+	licenseInfo.customization = true;
+	licenseInfo.advancedApi = false;
+	licenseInfo.usersCount = customLicenseInfo.uCount;
+	licenseInfo.usersViewCount = customLicenseInfo.uCount;
+	licenseInfo.usersExpire = 86400;
+	licenseInfo.hasLicense = true;
+}
 const updateLicense = async () => {
 	try {
 		await readLicense();
 		await docsCoServer.setLicenseInfo(operationContext.global, licenseInfo, licenseOriginal);
+		await customUpdateLicense();
+		operationContext.global.logger.info('Read licenseInfo: %s', licenseInfo);
+		operationContext.global.logger.info('Read licenseOriginal: %s', licenseOriginal);
 		operationContext.global.logger.info('End updateLicense');
 	} catch (err) {
 		operationContext.global.logger.error('updateLicense error: %s', err.stack);
