@@ -145,8 +145,8 @@ const updateLicense = async () => {
 		await readLicense();
 		await docsCoServer.setLicenseInfo(operationContext.global, licenseInfo, licenseOriginal);
 		await customUpdateLicense();
-		operationContext.global.logger.info('Read licenseInfo: %s', licenseInfo);
-		operationContext.global.logger.info('Read licenseOriginal: %s', licenseOriginal);
+		operationContext.global.logger.warn('Read licenseInfo: %s', licenseInfo);
+		operationContext.global.logger.warn('Read licenseOriginal: %s', licenseOriginal);
 		operationContext.global.logger.info('End updateLicense');
 	} catch (err) {
 		operationContext.global.logger.error('updateLicense error: %s', err.stack);
