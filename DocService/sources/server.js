@@ -119,7 +119,7 @@ const getCustomLicenseInfo = async function () {
 	operationContext.global.logger.info('Read customLicenseInfo: %s', customLicenseInfo);
 	return JSON.parse(customLicenseInfo);
 }
-const customUpdateLicense = async function () {
+const customUpdateLicense = async function (licenseInfo) {
 	const customLicenseInfo =await getCustomLicenseInfo();
 	// branding:true,
 	// connections:conns
@@ -130,13 +130,13 @@ const customUpdateLicense = async function () {
 	// usersViewCount:uCount
 	// usersExpire:86400
 	// hasLicense:true
-	licenseInfo.branding = true;
+	// licenseInfo.branding = true;
 	licenseInfo.connections = customLicenseInfo.conns;
 	licenseInfo.connectionsView = customLicenseInfo.conns;
-	licenseInfo.customization = true;
+	// licenseInfo.customization = true;
 	licenseInfo.advancedApi = false;
-	licenseInfo.usersCount = customLicenseInfo.uCount;
-	licenseInfo.usersViewCount = customLicenseInfo.uCount;
+	// licenseInfo.usersCount = customLicenseInfo.uCount;
+	// licenseInfo.usersViewCount = customLicenseInfo.uCount;
 	licenseInfo.usersExpire = 86400;
 	licenseInfo.hasLicense = true;
 }
@@ -144,7 +144,7 @@ const updateLicense = async () => {
 	try {
 		await readLicense();
 		await docsCoServer.setLicenseInfo(operationContext.global, licenseInfo, licenseOriginal);
-		await customUpdateLicense();
+		await customUpdateLicense(licenseInfo);
 		operationContext.global.logger.warn('Read licenseInfo: %s', licenseInfo);
 		operationContext.global.logger.warn('Read licenseOriginal: %s', licenseOriginal);
 		operationContext.global.logger.info('End updateLicense');
